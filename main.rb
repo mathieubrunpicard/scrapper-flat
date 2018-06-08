@@ -48,7 +48,6 @@ class Scrap
 
           results[i]= Hash.new
 
-
           begin
             results[i]["url"] = node.xpath('//div[@class="c-pa-info"]/a[@class="c-pa-link link_AB"]')[j]["href"]
             results[i]["price"] = Integer(node.xpath('//div[@class="c-pa-info"]/div[@class="c-pa-price"]/span[2]')[j].text.gsub(/[\D]/, ""))
@@ -72,8 +71,6 @@ class Scrap
             n_page +=1
             else another_page == false
 
-
-
             end
 
         end
@@ -88,10 +85,6 @@ class Scrap
     worksheet = workbook.create_worksheet :name =>'sheet1'
 
     worksheet.row(0).concat %w{ n° Link Prix Surface €/m2 Place}
-    # worksheet.add_cell(0, 2, 'Price')
-    # worksheet.add_cell(0, 3, 'Surface')
-    # worksheet.add_cell(0, 4, '€/m2')
-    # worksheet.add_cell(0, 5, 'Place')
 
           i = 1
           output.each do |row|
