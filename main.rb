@@ -2,8 +2,8 @@ require 'nokogiri'
 require 'open-uri'
 require 'pry'
 require 'mechanize'
-require 'json'
 require 'time'
+require 'spreadsheet'
 
 
 class Scrap
@@ -15,11 +15,11 @@ class Scrap
     puts "Surface min?"
     @search_params["surfacemin"] = "40"
     puts "Code postal de la zone ?"
-    @cp = "75005" #gets.chomp
+    @cp = gets.chomp
     @search_params["cp"] = @cp
     puts "Trier par ?"
     puts "initial/a_surface"
-    @search_params["tri"] = "initial" #gets.chomp
+    @search_params["tri"] = "a_surface" #gets.chomp
   end
 
   def create_param_url(search_params)
@@ -29,7 +29,6 @@ class Scrap
           url_string = url_string + "&" + key + "=" + value
       end
     @link =  @link + url_string
-    p @link
   end
 
   def parsing_page(link)
@@ -56,7 +55,7 @@ class Scrap
             results[i]["surface"] = node.xpath('//div[@class="c-pa-info"]/div[@class="c-pa-criterion"]/em[3]')[j].text.gsub(/[\,]/, ".").gsub(/[^\.\d]/, "").to_f
             results[i]["€/m2"] =  (results[i]["price"]/results[i]["surface"]).round
             results[i]["adress"] = node.xpath('//div[@class="c-pa-info"]/div[@class="c-pa-city"]')[j].text
-             rescue NoMethodError => e
+             rescue NoMethodError, Mechanize::RedirectLimitReachedError => e
 
                p e
                p i
@@ -67,27 +66,50 @@ class Scrap
           end
           another_page = page.search('a.pagination-next').any?
             if another_page == true
+               sleep(5)
             link = page.link_with(:class => "pagination-next").uri
             p "switching page"
             n_page +=1
             else another_page == false
+
+
+
             end
+
         end
       end
     return results
 
   end
 
-def write_json (path, output)
+  def write_xls(path, output)
+    output = output
+    workbook = Spreadsheet::Workbook.new
+    worksheet = workbook.create_worksheet :name =>'sheet1'
 
-  File.open(path,"w") do |f|
-    f.write(JSON.pretty_generate(output))
+    worksheet.row(0).concat %w{ n° Link Prix Surface €/m2 Place}
+    # worksheet.add_cell(0, 2, 'Price')
+    # worksheet.add_cell(0, 3, 'Surface')
+    # worksheet.add_cell(0, 4, '€/m2')
+    # worksheet.add_cell(0, 5, 'Place')
+
+          i = 1
+          output.each do |row|
+              begin
+                 worksheet.row(i).replace [row[0], row[1]['url'] , row[1]['price'], row[1]['surface'] ,row[1]['€/m2'], row[1]['adress']]
+                 binding.pry
+            rescue
+
+            end
+            i+=1
+          end
+    workbook.write(path)
   end
-end
 
   def wrapper
-    name_file = "#{Time.now.to_s.gsub(/[\D]/, "")}" + @cp + ".json"
-    write_json(name_file, parsing_page(create_param_url(@search_params)))
+    @name_file = "#{Time.now.to_s.gsub(/[\D]/, "")}" + @cp + ".xls"
+    output = parsing_page(create_param_url(@search_params))
+    write_xls(@name_file, output)
   end
 end
 
