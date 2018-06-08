@@ -44,27 +44,26 @@ class Scrap
   }
     while another_page == true
      a.get(link) do |page|
-
+ j = 0
         page.xpath('//div[@class="c-pa-info"]').each do |node|
 
           results[i]= Hash.new
-           if n_page > 0
-          j = i-n_page*19-n_page + 1
-          else j = i
-          end
+
 
           begin
             results[i]["url"] = node.xpath('//div[@class="c-pa-info"]/a[@class="c-pa-link link_AB"]')[j]["href"]
             results[i]["price"] = Integer(node.xpath('//div[@class="c-pa-info"]/div[@class="c-pa-price"]/span[2]')[j].text.gsub(/[\D]/, ""))
             results[i]["surface"] = node.xpath('//div[@class="c-pa-info"]/div[@class="c-pa-criterion"]/em[3]')[j].text.gsub(/[\,]/, ".").gsub(/[^\.\d]/, "").to_f
-            results[i]["€/m2"] =  results[i]["price"]/ results[i]["surface"]
+            results[i]["€/m2"] =  (results[i]["price"]/results[i]["surface"]).round
             results[i]["adress"] = node.xpath('//div[@class="c-pa-info"]/div[@class="c-pa-city"]')[j].text
              rescue NoMethodError => e
-              binding.pry
+
                p e
                p i
              end
+             j = j +1
               i = i +1
+
           end
           another_page = page.search('a.pagination-next').any?
             if another_page == true
